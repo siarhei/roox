@@ -5,9 +5,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.test.context.ActiveProfiles;
@@ -21,6 +24,7 @@ import ru.roox.service.CustomerService;
 import ru.roox.test.utils.CustomerBuilder;
 import ru.roox.web.assembler.impl.CustomerAssemblerImpl;
 import ru.roox.web.assembler.impl.PartnerMappingAssemblerImpl;
+import ru.roox.web.ws.errors.EntityNotFoundException;
 
 import java.util.Map;
 
@@ -38,7 +42,7 @@ import static ru.roox.test.utils.PartnerMappingBuilder.newBuilder;
         "classpath*:META-INF/spring/*-beans.xml"})
 @WebAppConfiguration
 @ActiveProfiles(profiles = {"test"})
-public class AbstractControllerTest {
+public abstract class AbstractControllerTest {
     protected final Map<Long, Customer> customersMap = Maps.newHashMap();
     protected final Multimap<Long, PartnerMapping> partnerMappingMultimap = LinkedHashMultimap.create(1, 3);
 
@@ -66,6 +70,9 @@ public class AbstractControllerTest {
     @Spy
     protected PartnerMappingAssemblerImpl partnerMappingAssembler;
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -84,4 +91,18 @@ public class AbstractControllerTest {
     public void testFake() throws Exception {
         assertTrue(true);
     }
+
+    @Test
+    public void testGetPartnerByCustomer() throws Exception {
+        Long customerId = 3L;
+        Long partnerId = 1L;
+        Mockito.when(customerService.findBy(eq(customerId), eq(partnerId))).thenReturn(null);
+
+        thrown.expect(EntityNotFoundException.class);
+        thrown.expectMessage("Partner mapping not found (id=1) for customer (id=3)");
+        getTestedInstance().getPartnerByCustomer(customerId, partnerId);
+
+    }
+
+    public abstract AbstractController getTestedInstance();
 }

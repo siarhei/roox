@@ -36,6 +36,11 @@ public class MeCustomerControllerTest extends AbstractControllerTest {
     @Captor
     private ArgumentCaptor<PartnerMapping> partnerCaptor;
 
+    @Override
+    public AbstractController getTestedInstance() {
+        return customerController;
+    }
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
